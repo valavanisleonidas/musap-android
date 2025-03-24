@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.Packaging
+
 plugins {
     id("com.android.library")
 }
@@ -5,6 +7,7 @@ plugins {
 android {
     namespace = "fi.methics.musapsdk"
     compileSdk = 34
+
 
     defaultConfig {
         minSdk = 26

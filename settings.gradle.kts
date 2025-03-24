@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "MUSAP SDK"
 include(":app")
- 
+include(":testapp")
