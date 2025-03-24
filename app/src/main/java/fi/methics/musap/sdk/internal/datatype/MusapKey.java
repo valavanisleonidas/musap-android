@@ -1,5 +1,7 @@
 package fi.methics.musap.sdk.internal.datatype;
 
+import java.security.PrivateKey;
+import java.security.interfaces.ECPrivateKey;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,9 @@ public class MusapKey {
     private String sscdType;
     private Instant createdDate;
     private PublicKey publicKey;
+    private String publicKeyHex;
+    private String privateKeyHex;
+
     private MusapCertificate certificate;
     private List<MusapCertificate> certificateChain;
     private List<KeyAttribute> attributes;
@@ -40,6 +45,8 @@ public class MusapKey {
         this.sscdId           = builder.sscdId;
         this.sscdType         = builder.sscdType;
         this.publicKey        = builder.publicKey;
+        this.publicKeyHex        = builder.publicKeyHex;
+        this.privateKeyHex       = builder.privateKeyHex;
         this.certificate      = builder.certificate;
         this.certificateChain = builder.certificateChain;
         this.keyUsages        = builder.keyUsages;
@@ -125,6 +132,17 @@ public class MusapKey {
     public PublicKey getPublicKey() {
         return publicKey;
     }
+
+
+
+    public String getPublicKeyHex() {
+        return publicKeyHex;
+    }
+
+    public String getPrivateKeyHex() {
+        return privateKeyHex;
+    }
+
 
     /**
      * Get the certificate associated with this key
@@ -321,6 +339,8 @@ public class MusapKey {
         private String sscdId;
         private String sscdType;
         private PublicKey publicKey;
+        private String publicKeyHex;
+        private String privateKeyHex;
         private MusapCertificate certificate;
         private List<MusapCertificate> certificateChain = new ArrayList<>();
         private List<KeyAttribute> attributes = new ArrayList<>();
@@ -356,6 +376,16 @@ public class MusapKey {
 
         public Builder setPublicKey(PublicKey publicKey) {
             this.publicKey = publicKey;
+            return this;
+        }
+
+        public Builder setPrivateKeyHex(String privateKeyHex) {
+            this.privateKeyHex = privateKeyHex;
+            return this;
+        }
+
+        public Builder setPublicKeyHex(String publicKeyHex) {
+            this.publicKeyHex = publicKeyHex;
             return this;
         }
 

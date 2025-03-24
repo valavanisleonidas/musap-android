@@ -3,6 +3,7 @@ package fi.methics.musap.sdk.internal.datatype;
 import fi.methics.musap.sdk.attestation.KeyAttestationResult;
 import fi.methics.musap.sdk.internal.util.MBase64;
 import fi.methics.musap.sdk.internal.util.MusapSscd;
+import fi.methics.musap.sdk.sscd.android.EthereumSigner;
 
 /**
  * MUSAP Signature class. This contains the raw signature and various signature details like
@@ -12,7 +13,11 @@ public class MusapSignature {
 
     private byte[] rawSignature;
     private MusapKey key;
+
+    private EthereumSigner.Signature ethSignature;
+
     private SignatureAlgorithm algorithm;
+    private String algorithmString;
     private SignatureFormat format;
     private KeyAttestationResult attestationData;
 
@@ -58,6 +63,14 @@ public class MusapSignature {
     public MusapSignature(byte[] rawSignature, MusapKey key) {
         this.rawSignature = rawSignature;
         this.key          = key;
+    }
+
+    public MusapSignature(EthereumSigner.Signature signature, MusapKey key, String algorithmString, SignatureFormat format) {
+        this.ethSignature = signature;
+        this.key          = key;
+        this.algorithmString    = algorithmString;
+        this.format       = format;
+
     }
 
     /**
@@ -117,6 +130,7 @@ public class MusapSignature {
         return MBase64.toBase64String(this.rawSignature);
     }
 
+
     /**
      * Get Key Attestation result related to this signature
      * @return Key Attestation result (may be null)
@@ -125,4 +139,11 @@ public class MusapSignature {
         return this.attestationData;
     }
 
+    public EthereumSigner.Signature getEthSignature() {
+        return ethSignature;
+    }
+
+    public void setEthSignature(EthereumSigner.Signature ethSignature) {
+        this.ethSignature = ethSignature;
+    }
 }

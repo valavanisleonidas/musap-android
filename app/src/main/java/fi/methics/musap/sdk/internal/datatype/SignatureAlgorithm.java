@@ -15,6 +15,8 @@ public class SignatureAlgorithm {
     public static SignatureAlgorithm SHA512_WITH_ECDSA = new SignatureAlgorithm("SHA512withECDSA");
     public static SignatureAlgorithm NONE_WITH_ECDSA   = new SignatureAlgorithm("NONEwithECDSA");
 
+    public static String SIGNATURE_SECP256K1 = "secp256k1";
+
     public static SignatureAlgorithm EDDSA = new SignatureAlgorithm("NONEwithEdDSA");
 
     public static SignatureAlgorithm SHA256_WITH_RSA = new SignatureAlgorithm("SHA256withRSA");

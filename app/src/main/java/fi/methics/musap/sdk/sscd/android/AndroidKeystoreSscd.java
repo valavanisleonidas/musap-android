@@ -1,11 +1,23 @@
 package fi.methics.musap.sdk.sscd.android;
 
+import static fi.methics.musap.sdk.sscd.android.EthereumSigner.ethereumMessageHash;
+import static fi.methics.musap.sdk.sscd.android.EthereumSigner.signMessage;
+
 import android.content.Context;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.util.encoders.Hex;
+
+import java.math.BigInteger;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.ECPoint;
+
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -37,6 +49,7 @@ import fi.methics.musap.sdk.internal.keygeneration.KeyGenReq;
 import fi.methics.musap.sdk.internal.sign.SignatureReq;
 import fi.methics.musap.sdk.internal.util.IdGenerator;
 import fi.methics.musap.sdk.internal.util.MLog;
+import fi.methics.musap.sdk.internal.util.StringUtil;
 
 /**
  * MUSAP SSCD implementation for Android KeyStore
@@ -62,12 +75,87 @@ public class AndroidKeystoreSscd implements MusapSscdInterface<AndroidKeystoreSe
         throw new UnsupportedOperationException();
     }
 
+    public EthereumSigner.Signature signSECp256k1(String message, String privateKeyHex){
+        BigInteger privateKey = new BigInteger(privateKeyHex, 16);
+        byte[] messageHash = ethereumMessageHash(message);
+
+        return signMessage(messageHash, privateKey);
+    }
+
+    //THIS IS ONLY FOR secp256k1 to work
+    private MusapKey createSECp256k1(KeyGenReq req, SscdInfo sscd) throws  Exception {
+
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+
+        // Retrieve SECP256K1 curve parameters
+        ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256k1");
+
+        // Create KeyPairGenerator for SECP256K1
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", BouncyCastleProvider.PROVIDER_NAME);
+        kpg.initialize(ecSpec); // Initialize with SECP256K1 parameters
+
+        KeyPair keyPair = kpg.generateKeyPair();
+
+        ECPrivateKey privateKey = (ECPrivateKey) keyPair.getPrivate();
+        ECPublicKey publicKey = (ECPublicKey) keyPair.getPublic();
+
+        MLog.d("Key generation successful using SECP256K1");
+
+        MusapKey generatedKey = new MusapKey.Builder()
+                .setSscdType(MusapConstants.ANDROID_KS_TYPE)
+                .setKeyAlias(req.getKeyAlias())
+                .setSscdId(sscd.getSscdId())
+                .setLoa(Arrays.asList(MusapLoA.EIDAS_SUBSTANTIAL, MusapLoA.ISO_LOA3))
+                .setPublicKey(new PublicKey(keyPair))
+                .setPrivateKeyHex(privateKeyToHex(privateKey))
+                .setPublicKeyHex(publicKeyToHex(publicKey))
+                .setKeyId(IdGenerator.generateKeyId())
+                .setAlgorithm(req.getAlgorithm())
+                .build();
+
+        MLog.d("Generated key with KeyURI " + generatedKey.getKeyUri());
+
+        return generatedKey;
+    }
+
+
+    // Convert private key to hex
+    public static String privateKeyToHex(ECPrivateKey privateKey) {
+        // The private key is a single scalar value (S)
+        byte[] privateKeyBytes = privateKey.getS().toByteArray();
+        return StringUtil.BytesToHexSEC256K1(privateKeyBytes);
+    }
+
+    // Convert public key to hex
+    public static String publicKeyToHex(ECPublicKey publicKey) {
+        // Get the public key point (x, y)
+        ECPoint ecPoint = publicKey.getW();
+        byte[] xBytes = ecPoint.getAffineX().toByteArray();
+        byte[] yBytes = ecPoint.getAffineY().toByteArray();
+
+        // Concatenate x and y with a prefix (0x04 for uncompressed point)
+        byte[] publicKeyBytes = new byte[1 + xBytes.length + yBytes.length];
+        publicKeyBytes[0] = 0x04; // Uncompressed format prefix
+        System.arraycopy(xBytes, 0, publicKeyBytes, 1, xBytes.length);
+        System.arraycopy(yBytes, 0, publicKeyBytes, 1 + xBytes.length, yBytes.length);
+
+        return StringUtil.BytesToHexSEC256K1(publicKeyBytes);
+    }
+
+
+
     @Override
     public MusapKey generateKey(KeyGenReq req) throws Exception {
+        SscdInfo sscd = this.getSscdInfo();
 
+        if (req.getAlgorithm().curve.equals("secp256k1")) {
+            MLog.d("secp256k1 curve use different function");
+            return this.createSECp256k1(req, sscd);
+        }
         Security.removeProvider("BC");
         MLog.d("Remove provider");
-        SscdInfo sscd = this.getSscdInfo();
         String                algorithm = this.resolveAlgorithm(req);
         AlgorithmParameterSpec algSspec = this.resolveAlgorithmParameterSpec(req);
 
@@ -112,6 +200,16 @@ public class AndroidKeystoreSscd implements MusapSscdInterface<AndroidKeystoreSe
 
     @Override
     public MusapSignature sign(SignatureReq req) throws GeneralSecurityException, IOException {
+
+        if (req.getAlgorithmString().equals("secp256k1")) {
+            String data = req.getDataString();
+            String privKey = req.getKey().getPrivateKeyHex().substring(2);
+
+            MLog.d("secp256k1 signature use different function with data "+ data);
+            EthereumSigner.Signature signature = this.signSECp256k1(data, privKey);
+            return new MusapSignature(signature, req.getKey(), req.getAlgorithmString(), req.getFormat());
+        }
+
         String alias = req.getKey().getKeyAlias();
         Security.removeProvider("BC");
         KeyStore ks = KeyStore.getInstance("AndroidKeyStore");

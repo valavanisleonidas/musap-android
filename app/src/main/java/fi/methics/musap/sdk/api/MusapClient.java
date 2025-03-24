@@ -1,5 +1,7 @@
 package fi.methics.musap.sdk.api;
 
+import static fi.methics.musap.sdk.sscd.android.EcdhKeyCalculator.computeSharedSecret;
+
 import android.content.Context;
 
 import com.google.gson.JsonSyntaxException;
@@ -89,6 +91,23 @@ public class MusapClient {
      */
     public static void bindKey(MusapSscd sscd, KeyBindReq req, MusapCallback<MusapKey> callback) {
         new BindKeyTask(callback, context.get(), sscd, req).executeOnExecutor(executor);
+    }
+
+    /**
+     * Compute ecdh shared secret using private key
+
+     example
+     String privateKeyHex = "8e9b2cab68eac300275338af03662f2f3f40913037d65ccabc1214ef6a765a8a";
+     String publicKeyHex = "041daed29134b538f4cdaaedc62090f6cd346a4350bae6933815ca89834a71ca411cbca2a0f705c090b1399c2908f63b55bc2caaf0eec8564cc0d993e8dd8090f0";
+
+     secret : 132b03e4af69cc639b3c9c5aadb8dc5c7c4921970cd3a0d3bba9bd0411bcfa49
+     */
+    public static String computeECDHSharedSecret(String privateKey, String publicKey) throws Exception {
+        return computeSharedSecret(privateKey, publicKey);
+    }
+
+    public static String computeECDHSharedSecretByKey(MusapKey key, String publicKey) throws Exception {
+        return computeSharedSecret(key.getPrivateKeyHex().substring(2), publicKey);
     }
 
     /**

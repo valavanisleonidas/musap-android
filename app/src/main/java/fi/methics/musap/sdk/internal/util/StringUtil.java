@@ -28,4 +28,17 @@ public class StringUtil {
         return string.getBytes(StandardCharsets.UTF_8);
     }
 
+    // Utility to convert byte array to hex
+    public static String BytesToHexSEC256K1(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder("0x");
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xFF & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
 }

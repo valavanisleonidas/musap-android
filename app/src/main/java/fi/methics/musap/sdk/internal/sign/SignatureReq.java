@@ -24,6 +24,8 @@ import fi.methics.musap.sdk.internal.datatype.SignatureFormat;
  */
 public class SignatureReq {
 
+    protected String dataString;
+    protected String algorithmString;
     @SerializedName("key")
     protected MusapKey key;
 
@@ -49,8 +51,10 @@ public class SignatureReq {
     private SignatureReq(Builder builder) {
         this.key         = builder.key;
         this.data        = builder.data;
+        this.dataString   = builder.dataString;
         this.displayText = builder.displayText;
         this.algorithm   = builder.algorithm;
+        this.algorithmString   = builder.algorithmString;
         this.format      = builder.format;
         this.attributes  = builder.attributes;
     }
@@ -179,9 +183,19 @@ public class SignatureReq {
         return activity;
     }
 
+    public String getAlgorithmString() {
+        return algorithmString;
+    }
+
+    public String getDataString() {
+        return dataString;
+    }
+
     public static class Builder {
+        private String algorithmString;
         private MusapKey key;
         private byte[] data;
+        private String dataString;
         protected String displayText = "Sign with MUSAP";
         private SignatureAlgorithm algorithm;
         private SignatureFormat format;
@@ -189,6 +203,9 @@ public class SignatureReq {
 
         public Builder(SignatureAlgorithm algorithm) {
             this.algorithm = algorithm;
+        }
+        public Builder(String algorithm) {
+            this.algorithmString = algorithm;
         }
 
         public Builder setKey(MusapKey key) {
@@ -198,6 +215,11 @@ public class SignatureReq {
 
         public Builder setData(byte[] data) {
             this.data = data;
+            return this;
+        }
+
+        public Builder setData(String data) {
+            this.dataString = data;
             return this;
         }
 
